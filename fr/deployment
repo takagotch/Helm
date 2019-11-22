@@ -1,0 +1,109 @@
+// default manifestfile
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  labels:
+    app: echo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+      - name: nginx
+        image "takagotch/nginx:latest"
+	imagePullPolicy: Always
+	livenessProbe:
+	  httpGet:
+	    pathGet:
+	      path: /
+	      port: 80
+	readinessProbe:
+	  httpGet:
+	   path: /
+	   port: 80
+	ports:
+	 - name: http
+	   containerPort: 80
+	env:
+	 - name: BACKEND_HOST
+	   value: "localhost:8080"
+      - name: echo
+        image: "takagotch/echo:latest"
+	imagePullPolicy: Always
+	ports:
+	 - containerPort: 8080
+	env:
+	 - name: HTTP_PORT
+	   value: "8080"
+
+//
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "echo.fullname" . }}
+  labels:
+    app: {{ template "echo.name" . }}
+    chart: {{ template "echo.chart" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLavels:
+      app: {{ template "echo.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "echo.name" .}}
+	release: {{ .Release.Name }}
+  spec:
+    containers:
+     - name: nginx
+       image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
+       imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+       ports:
+        - name: http
+	  containerPort: 80
+       livenessProbe:
+         httpGet:
+	   path: {{ .Values.nginx.healthCheck }}
+	   port: 80
+       readinessProbe:
+         httpGet:
+	   path: {{ .Values.nginx.healthCheck }}
+	   port: 80
+       env:
+        - name: BACKEND_HOST
+	  value: {{ .Values.nginx.backendHost | quote }}
+	- name: echo
+	  image: ""
+	  imagePUllPolicy: {}
+	  ports:
+	   - containerPort: {}
+	  env:
+	   - name: HTTP_PORT
+	     value: {{ .Values.echo.httpPort | quote }}
+	  resources:
+{{ toYaml .Values.resources | indent 12 }}
+  {{- with .Values.nodeSelector }}
+    nodeSelector:
+{{ toYaml . | indent 8 }}
+  {{- end }}
+  {{- with .Values.affinity }}
+    affinity:
+{{ toYaml . | index 8}}
+  {{- end }}
+  {{- with .Values.tolerations }}
+    tolerations:
+{{ toYaml . | indent 8 }}
+  {{- end }}
+
+

@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-version
+  labels:
+    app: echo-version
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: echo-version
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-version
+  lables:
+    app: echo-version
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-version
+  template:
+    metadata:
+      labels:
+        app: echo-version
+    spec:
+      containers:
+      - name: echo-version
+        image: takagotch/echo-version:0.1.0
+	ports:
+	- containerPort: 8080
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: update-checker
+  labels:
+    app: update-checker
+spec:
+  containers:
+  - name: kubectl
+    image: takagotch/fundamental:0.1.0
+    command:
+    - sh
+    - -c
+    - |
+      while true
+      do
+        APP_VERSION=`curl -s http://echo-version/`
+	echo "[`date`] $APP_VERSION"
+	sleep 1
+      done
+
+
+

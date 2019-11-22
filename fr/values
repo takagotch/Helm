@@ -1,0 +1,18 @@
+replicaCount: 1
+nginx:
+  image:
+    repository: takagotch/nginx
+    tag: latest
+    pullPolicy: Always
+  healthCheck: /
+  backendHost: localhost:8080
+
+echo:
+  image:
+    repository: takagotch/echo
+    tag: latest
+    pullPolicy: Always
+  httpPort: 8080
+
+
+
